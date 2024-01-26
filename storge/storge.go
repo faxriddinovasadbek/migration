@@ -227,18 +227,37 @@ func UptadeUser(id string, name *model.User) (*model.User, error) {
 
 func GetAllByRole(role string, page, limit int)([]*model.User, error){
 	db, err := connect()
-
+	
 	if err != nil{
-		return nil, err
+		return []*model.User{} , err
 	}
+	defer db.Close()
 
 	offset := limit * (page - 1)
 
-	rows, err := db.Query(`SELECT role_name, user_id FROM user LIMIT $1, offset $2`, limit, offset)
+
+	rows, err := db.Query(`SELECT role_name, user_id FROM roles WHERE lower(role_name) = $1  LIMIT $2 offset $3`, role, limit, offset)
+
+	var userRoles []*model.User
 
 	for rows.Next(){
+		var user model.User
+
+		if err = rows.Scan(&user.Role, &user.ID); err != nil{
+			return []*model.User{}, err
+		}
 		
+		res := db.QueryRow(`SELECT first_name, last_name, gender, email, password FROM users WHERE id = $1`, user.ID)
+
+		err = res.Scan(&user.FirstName, &user.LastName, &user.Gender, &user.Email, &user.Password )
+
+		if err != nil{
+			return []*model.User{} , err
+		}
+
+		userRoles = append(userRoles, &user)
 	}
 
-	return nil, nil
+	return userRoles, nil
 }
+

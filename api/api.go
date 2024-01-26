@@ -23,6 +23,7 @@ func main() {
 	router.DELETE("/user/delete", DeleteUser)
 	router.PUT("/user/update", UpdateUser)
 	router.GET("/user/getall", GetAllUsers)
+	router.GET("/user/getall/role", GetAllRole)
 
 	fmt.Println("Server is running...")
 
@@ -161,4 +162,13 @@ func GetAllRole(ctx *gin.Context) {
 	}
 
 	role := ctx.Query("role")	
+
+	resporoles, err := storge.GetAllByRole(role, intPage, intLimit)
+
+	if err != nil{
+		log.Println("Error while getting all users", err)
+		ctx.AbortWithError(http.StatusInternalServerError, err)
+	}
+
+	ctx.JSONP(http.StatusOK, resporoles)
 }
